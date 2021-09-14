@@ -3,6 +3,7 @@ import random
 import re
 import sys
 from typing import Counter
+import copy
 
 DAMPING = 0.85
 SAMPLES = 10000
@@ -19,9 +20,9 @@ def main():
     
     # begin of modifications
     # enumerate and print each of the pages and links   
-    print(f"Total páginas = {len(corpus)}") 
-    for key, value in corpus.items():
-        print(f"pagina: {key}, links: {value}, NumLinks= {len(value)}")        
+    # print(f"Total páginas = {len(corpus)}") 
+    # for key, value in corpus.items():
+    #     print(f"pagina: {key}, links: {value}, NumLinks= {len(value)}")        
     #transition_model(corpus, 'ai.html', DAMPING)
     # end of modifications
 
@@ -126,39 +127,42 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    iterativeRankInicial = dict()
-    iterativeRank = dict()
+    print("Begin iterative PageRank algorithm")
+    initialRank = dict()
+    pageRank = dict()
     N = len(corpus)
+    
     for key, value in corpus.items():
-        iterativeRankInicial[key] = 1/N
-        iterativeRank[key] = 0
+        initialRank[key] = 1/N
+    
+    corpusCopy = copy.deepcopy(corpus)
+    maximo = 1
+    i = 0
+    while maximo > 0.005:
+    #for i in range(10):
+        maximo = 0.0
+        for pageP, value in corpusCopy.items():        
+            sumatoria = 0
+            for page_i, lista_i in corpus.items():            
+                if(pageP in lista_i):
+                    sumatoria += initialRank[page_i]/ len(lista_i)
+            pageRank[pageP] = ((1 - damping_factor)/N) + (damping_factor * sumatoria)
+            #print(f"{i}: pageRank[pageP] - initialRank[pageP]: {pageRank[pageP]:.4f} - {initialRank[pageP]:.4f} len: {len(pageRank)} {len(initialRank)}")
+            maximo += abs(pageRank[pageP] - initialRank[pageP])
+            #print(f"pageRank[pageP] - initialRank[pageP] {pageRank[pageP]:.4f}  {initialRank[pageP]:.4f}")
 
-    #for i in range(1):
-    for key, value in corpus.items():
-        pageP = key
-        print(f"La Página p: {pageP}")
-        sumatoria = 0
-        for key, value in corpus.items():
-            page_i = key            
-            NumLinks_i = len(corpus[page_i])                
-            print(f"La Página i: {page_i} NumLinks_i: {NumLinks_i}")            
-            if page_i in corpus[pageP] and NumLinks_i > 0 and page_i != pageP:
-                print(f"page_i in corpus[pageP]: {page_i in corpus[pageP]}")
-                sumatoria += iterativeRankInicial[page_i]/NumLinks_i
-                print(f"iterativeRankInicial[page_i] = {iterativeRankInicial[page_i]}")
-        iterativeRank[pageP] = ((1-damping_factor)/N) + (damping_factor * sumatoria)
-        # Normaliza
-        suma = 0
-        for key, value in corpus.items():
-            suma += iterativeRank[key]
-        print(f"Suma: {suma}")
+        # print(f"maximo= {maximo:.4f}")
+        # for page, value in corpus.items():
+        #     print(f"initialRank[page] - pageRank[page] {initialRank[page]:.4f}  {pageRank[page]:.4f}")
+        #     maximo += abs(initialRank[page] - pageRank[page])
+        #     print(f"maximo= {maximo:.4f}")
+        i+=1
+        if(maximo < 0.005):
+            print(f"The target was reached (diff={maximo:.4f} < 0.005) in {i} iterations")
         
-        for key, value in corpus.items():
-            iterativeRank[key] = iterativeRank[key] / suma    
-        iterativeRankInicial = iterativeRank
-        # for key, value in corpus.items():
-        #     iterativeRank[key] = 0
-    return iterativeRank
+        initialRank = copy.deepcopy(pageRank)
+        
+    return initialRank
     # raise NotImplementedError
 
 
